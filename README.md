@@ -1,6 +1,3 @@
-#### Note: Amazon changed the layout and IDs of their giftcard reload page, so this script is currently broken. Feel free to make an issue and/or fork the script if you want to make fixes yourself.
----
-
 # Giftcards Galore!
 Python script to auto-buy Amazon giftcards
 
@@ -8,6 +5,8 @@ Based off of: </br>
 https://github.com/ageoldpun/amazon_gifts
 </br>
 http://pastebin.com/UW6eC3rn
+https://github.com/justinjohnso/giftcards_galore
+https://github.com/AFTERWAKE/giftcards_galore
 
 ---
 
@@ -60,5 +59,17 @@ These are arrays that correspond with the (0-indexed) list of cards on your
 In terminal, run `python giftcards_galore.py`. Selenium will open a new Chrome
 window and start the script.
 
-For testing purposes, I recommend either starting with one iteration per card,
-or commenting out line 57. 
+# Warning
+This is incomplete and still needs cleanup. If it works, this will charge your cards.
+
+I intend to fix / clean up :
+* PEP 8
+* Secure passwords
+* Comments
+* Imports
+* Exceptions
+* CARDS and CARD_NUMBERS array functionality
+* Update to python 3
+* Randomize timings between every action
+
+Use at your own risk.
