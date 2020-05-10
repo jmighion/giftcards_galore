@@ -3,9 +3,11 @@ Python script to auto-buy Amazon giftcards
 
 Based off of: </br>
 https://github.com/ageoldpun/amazon_gifts
-</br>
+
 http://pastebin.com/UW6eC3rn
+
 https://github.com/justinjohnso/giftcards_galore
+
 https://github.com/AFTERWAKE/giftcards_galore
 
 ---
