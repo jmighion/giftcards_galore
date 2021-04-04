@@ -1,11 +1,14 @@
 """Auto buy Amazon Giftcards"""
 
 import os
+import re
 import sys
 import time
 import random
 from dotenv import load_dotenv
 from selenium import webdriver
+# Needs Python 3
+# from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait # available since 2.4.0
 from selenium.webdriver.support import expected_conditions # available since 2.26.0
 from selenium.common.exceptions import *
@@ -39,6 +42,8 @@ GIFT_CARD_AMOUNT = os.getenv('GIFT_CARD_AMOUNT')
 
 # Ensure Chrome Webdriver is on System PATH
 driver = webdriver.Chrome()
+# Needs Python 3
+# driver = webdriver.Chrome(ChromeDriverManager().install())
 
 
 class AuthenticationError(Exception):
@@ -83,32 +88,48 @@ def giftcard_buyer():
     for card in CARDS:
         print "card: %r" % card
         for iteration in range(ITERATIONS[i]):
+            # setup vars
+            skip_next_submit = False
+
             print "iteration: %r" % (iteration)
             if driver.title != 'Reload Your Balance':
                 driver.get('https://www.amazon.com/asv/reload/')
             wait.until(expected_conditions.title_is('Reload Your Balance'))
             time.sleep(2)
+
             driver.find_element_by_id('asv-manual-reload-amount').send_keys(str(GIFT_CARD_AMOUNT))
             time.sleep(1)
+
             print "Click pmts-credit-card-row"
             driver.find_elements_by_class_name('pmts-credit-card-row')[card].click()
+
             if iteration == 0:
                 try:
                     print "Finding form-submit-button"
                     driver.find_element_by_id('form-submit-button').click()
                     time.sleep(random.randint(1, 5))
+
                     print "Finding CC %r" % (CARD_NUMBERS[card])
                     # Searching for placeholder$='<last-4-of-card>'. Needs single quotes. Always only 1 card, so [0].
                     cc_input_box = driver.find_elements_by_css_selector("[placeholder$='" + CARD_NUMBERS[card][-4:] + "']")[0]
                     time.sleep(1)
+
                     print "Sending CC number to input box"
                     cc_input_box.send_keys(CARD_NUMBERS[card])
                     time.sleep(random.randint(1, 5))
+
                     print "Verify card"
-                    # Find Verify button by partial id because when the page reloads the previously verified cards do
-                    # not render those buttons, so the array is wrong.
-                    driver.find_elements_by_xpath("//button[contains(@id,'" + cc_input_box.get_attribute("id")[:-1] + "')]")[0].click()
+                    # Find Verify button by cc_input_box_id adding 1 to the trailing digits.
+                    # When the page reloads the previously verified cards do not render those buttons,
+                    # so the array can't be trusted to be the same each time.
+                    cc_input_box_id = cc_input_box.get_attribute("id")
+                    button_id = re.sub('[0-9]+$', str(int(re.match('.*?([0-9]+)$', cc_input_box_id).group(1)) + 1), cc_input_box_id)
+                    driver.find_elements_by_xpath("//button[contains(@id,'" + button_id + "')]")[0].click()
                     time.sleep(random.randint(1, 5))
+                except IndexError:
+                    # Very few times the page doesn't ask for confirmation.
+                    print "Probably didn't ask for CC confirmation. Moving on."
+                    skip_next_submit = True
                 except NoSuchElementException:
                     print "Card did not confirm"
                     print sys.exc_info()[0]
@@ -120,16 +141,21 @@ def giftcard_buyer():
             else:
                 time.sleep(random.randint(5, 10))
 
-            print "Submit"
-            driver.find_element_by_id('form-submit-button').click()
-            time.sleep(random.randint(1, 3))
+            if not skip_next_submit:
+                print "Submit"
+                driver.find_element_by_id('form-submit-button').click()
+                time.sleep(random.randint(1, 3))
+
             try:
                 driver.find_element_by_xpath("//span[contains(.,'this message again')]").click()
                 time.sleep(random.randint(1, 3))
                 driver.find_element_by_id('asv-reminder-action-primary').click()
                 time.sleep(random.randint(1, 3))
+            except IndexError:
+                pass
             except NoSuchElementException:
                 pass
+
             driver.get('https://www.amazon.com/asv/reload/')
             time.sleep(2)
         i += 1
