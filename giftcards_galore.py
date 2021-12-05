@@ -1,17 +1,16 @@
 """Auto buy Amazon Giftcards"""
 
 import os
-import re
 import sys
 import time
-import random
+
 from dotenv import load_dotenv
 from selenium import webdriver
+from selenium.common.exceptions import *
+from selenium.webdriver.support import expected_conditions  # available since 2.26.0
+from selenium.webdriver.support.ui import WebDriverWait  # available since 2.4.0
 # Needs Python 3
 # from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support.ui import WebDriverWait # available since 2.4.0
-from selenium.webdriver.support import expected_conditions # available since 2.26.0
-from selenium.common.exceptions import *
 
 # Load env variables from ".env" file in the same folder
 load_dotenv()
@@ -41,7 +40,7 @@ ITERATIONS = [0, 0, 12, 12]
 GIFT_CARD_AMOUNT = os.getenv('GIFT_CARD_AMOUNT')
 
 # Ensure Chrome Webdriver is on System PATH
-driver = webdriver.Chrome()
+driver = webdriver.Chrome("")
 # Needs Python 3
 # driver = webdriver.Chrome(ChromeDriverManager().install())
 
@@ -56,13 +55,18 @@ def giftcard_buyer():
     wait = WebDriverWait(driver, 10)
     driver.get('https://www.amazon.com/asv/reload/')
     try:
-        wait.until(expected_conditions.title_is('Reload Your Balance'))
-        driver.find_element_by_id('form-submit-button').click()
+        wait.until(expected_conditions.title_contains('Amazon Reload'))
+        driver.find_element_by_id('gcui-asv-reload-form-custom-amount').send_keys(str(GIFT_CARD_AMOUNT))
+        time.sleep(1)
+        inputs = driver.find_elements_by_name('submit.gc-buy-now')
+        for x in inputs:
+            if x.is_displayed():
+                x.click()
         print "Sign in"
         # Added wait times between most page loads because the driver was going too fast
         # The wait.until() did not seem to work. Could probably change the wait.until to check for the next element.
         time.sleep(4)
-        wait.until(expected_conditions.title_is('Amazon Sign-In'))
+        wait.until(expected_conditions.title_contains('Amazon Sign-In'))
         time.sleep(4)
         driver.find_element_by_id('ap_email').send_keys(AMAZON_USERNAME)
     except:
@@ -71,10 +75,10 @@ def giftcard_buyer():
         pass
 
     driver.find_element_by_id('continue').click()
-    time.sleep(2)
+    time.sleep(3)
     driver.find_element_by_id('ap_password').send_keys(AMAZON_PASSWORD)
     driver.find_element_by_id('signInSubmit').click()
-    time.sleep(8)
+    time.sleep(12)
     # Not sure how to handle 2FA. Manually inputting during the previous sleep, but the button presses and the rest
     # could be automated.
     # Now there's a page asking for phone number. That could be automatically skipped as well.
@@ -88,76 +92,51 @@ def giftcard_buyer():
     for card in CARDS:
         print "card: %r" % card
         for iteration in range(ITERATIONS[i]):
-            # setup vars
-            skip_next_submit = False
 
             print "iteration: %r" % (iteration)
-            if driver.title != 'Reload Your Balance':
-                driver.get('https://www.amazon.com/asv/reload/')
-            wait.until(expected_conditions.title_is('Reload Your Balance'))
-            time.sleep(2)
 
-            driver.find_element_by_id('asv-manual-reload-amount').send_keys(str(GIFT_CARD_AMOUNT))
-            time.sleep(1)
+            # Submit new gift card amount after the first time, but also for the first iteration of each subsequent card
+            if iteration != 0 or (card > 0 and iteration == 0 and ITERATIONS[card - 1] != 0):
+                print "New iteration gift card amount setup"
+                wait.until(expected_conditions.title_contains('Amazon Reload'))
+                driver.find_element_by_id('gcui-asv-reload-form-custom-amount').send_keys(str(GIFT_CARD_AMOUNT))
+                time.sleep(1)
+                inputs = driver.find_elements_by_name('submit.gc-buy-now')
+                for x in inputs:
+                    if x.is_displayed():
+                        x.click()
 
-            print "Click pmts-credit-card-row"
-            driver.find_elements_by_class_name('pmts-credit-card-row')[card].click()
-
-            if iteration == 0:
+                # One time I was prompted for the password and token again. Haven't ran into it again yet, so this can probably be deleted.
                 try:
-                    print "Finding form-submit-button"
-                    driver.find_element_by_id('form-submit-button').click()
-                    time.sleep(random.randint(1, 5))
-
-                    print "Finding CC %r" % (CARD_NUMBERS[card])
-                    # Searching for placeholder$='<last-4-of-card>'. Needs single quotes. Always only 1 card, so [0].
-                    cc_input_box = driver.find_elements_by_css_selector("[placeholder$='" + CARD_NUMBERS[card][-4:] + "']")[0]
-                    time.sleep(1)
-
-                    print "Sending CC number to input box"
-                    cc_input_box.send_keys(CARD_NUMBERS[card])
-                    time.sleep(random.randint(1, 5))
-
-                    print "Verify card"
-                    # Find Verify button by cc_input_box_id adding 1 to the trailing digits.
-                    # When the page reloads the previously verified cards do not render those buttons,
-                    # so the array can't be trusted to be the same each time.
-                    cc_input_box_id = cc_input_box.get_attribute("id")
-                    button_id = re.sub('[0-9]+$', str(int(re.match('.*?([0-9]+)$', cc_input_box_id).group(1)) + 1), cc_input_box_id)
-                    driver.find_elements_by_xpath("//button[contains(@id,'" + button_id + "')]")[0].click()
-                    time.sleep(random.randint(1, 5))
-                except IndexError:
-                    # Very few times the page doesn't ask for confirmation.
-                    print "Probably didn't ask for CC confirmation. Moving on."
-                    skip_next_submit = True
+                    driver.find_element_by_id('ap_password')
+                    driver.find_element_by_id('ap_password').send_keys(AMAZON_PASSWORD)
+                    driver.find_element_by_id('signInSubmit').click()
+                    time.sleep(12)
                 except NoSuchElementException:
-                    print "Card did not confirm"
-                    print sys.exc_info()[0]
                     pass
-                except:
-                    print "Error?"
-                    print sys.exc_info()[0]
-                    pass
-            else:
-                time.sleep(random.randint(5, 10))
 
-            if not skip_next_submit:
-                print "Submit"
-                driver.find_element_by_id('form-submit-button').click()
-                time.sleep(random.randint(1, 3))
-
+            print "Click change card link"
             try:
-                driver.find_element_by_xpath("//span[contains(.,'this message again')]").click()
-                time.sleep(random.randint(1, 3))
-                driver.find_element_by_id('asv-reminder-action-primary').click()
-                time.sleep(random.randint(1, 3))
-            except IndexError:
-                pass
+                driver.find_element_by_id('payChangeButtonId').click()
+                time.sleep(4)
             except NoSuchElementException:
                 pass
 
+            print "Click CC radio button"
+            driver.find_elements_by_xpath("//input[@type='radio']")[card].click()
+            time.sleep(4)
+
+            print "Click use this card button"
+            driver.find_element_by_xpath("//input[@aria-labelledby='orderSummaryPrimaryActionBtn-announce']").click()
+            time.sleep(4)
+
+            print "Click place your order button"
+            driver.find_element_by_xpath("//input[@aria-labelledby='submitOrderButtonId-announce']").click()
+            time.sleep(4)
+
+            print "Continue loop"
             driver.get('https://www.amazon.com/asv/reload/')
-            time.sleep(2)
+            time.sleep(4)
         i += 1
     driver.quit()
 
