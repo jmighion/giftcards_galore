@@ -1,6 +1,8 @@
 """Auto buy Amazon Giftcards"""
 
 import os
+import random
+import re
 import sys
 import time
 
@@ -126,9 +128,46 @@ def giftcard_buyer():
             driver.find_elements_by_xpath("//input[@type='radio']")[card].click()
             time.sleep(4)
 
-            print "Click use this card button"
-            driver.find_element_by_xpath("//input[@aria-labelledby='orderSummaryPrimaryActionBtn-announce']").click()
-            time.sleep(4)
+            # Searching for placeholder$='<last-4-of-card>'. Needs single quotes. Always only 1 card, so [0].
+            try:
+                cc_input_box = driver.find_elements_by_css_selector("[placeholder$='" + CARD_NUMBERS[card][-4:] + "']")[0]
+                if cc_input_box:
+                    try:
+                        print "Found verification input"
+                        print "Sending CC number to input box"
+                        cc_input_box.send_keys(CARD_NUMBERS[card])
+                        time.sleep(random.randint(1, 5))
+
+                        print "Verify card"
+                        # Find Verify button by cc_input_box_id adding 1 to the trailing digits.
+                        # When the page reloads the previously verified cards do not render those buttons,
+                        # so the array can't be trusted to be the same each time.
+                        cc_input_box_id = cc_input_box.get_attribute("id") #pp-kFRldw-171
+
+                        button_id = re.sub('[0-9]+$', str(int(re.match('.*?([0-9]+)$', cc_input_box_id).group(1)) + 1), cc_input_box_id) #
+                        driver.find_elements_by_xpath("//button[contains(@id,'" + button_id + "')]")[0].click()
+                        time.sleep(random.randint(1, 5))
+                    except:
+                        print "Error?"
+                        print sys.exc_info()[0]
+            except:
+                print "Error?"
+                print sys.exc_info()[0]
+                pass
+
+
+            try:
+                use_this_card = driver.find_element_by_xpath("//input[@aria-labelledby='orderSummaryPrimaryActionBtn-announce']")
+                if use_this_card:
+                    print "Click use this card button"
+
+                    use_this_card.click()
+                    del use_this_card
+                    time.sleep(4)
+            except:
+                print "Error?"
+                print sys.exc_info()[0]
+                pass
 
             print "Click place your order button"
             driver.find_element_by_xpath("//input[@aria-labelledby='submitOrderButtonId-announce']").click()
