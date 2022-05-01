@@ -65,13 +65,11 @@ window and start the script.
 This is incomplete and still needs cleanup. If it works, this will charge your cards.
 
 I intend to fix / clean up :
-* PEP 8
 * Secure passwords
 * Comments
 * Imports
 * Exceptions
 * CARDS and CARD_NUMBERS array functionality
-* Update to python 3
 * Randomize timings between every action
 
 Use at your own risk.
