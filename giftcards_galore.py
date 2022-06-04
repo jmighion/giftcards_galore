@@ -33,7 +33,7 @@ CARDS = [0, 1, 2, 3]
 CARD_NUMBERS = [os.getenv("CC0"), os.getenv("CC1"), os.getenv("CC2"), os.getenv("CC3")]
 
 # Iterations array, corresponds to the number of purchases for each card
-ITERATIONS = [0, 0, 4, 12]
+ITERATIONS = [0, 0, 12, 12]
 
 # Amount to be loaded onto each gift card
 GIFT_CARD_AMOUNT = os.getenv("GIFT_CARD_AMOUNT")
@@ -65,7 +65,7 @@ def giftcard_buyer():
         # The wait.until() did not seem to work. Could probably change the wait.until to check for the next element.
         time.sleep(4)
         wait.until(expected_conditions.title_contains("Amazon Sign-In"))
-        time.sleep(4)
+        # time.sleep(4)
         driver.find_element(By.ID, "ap_email").send_keys(AMAZON_USERNAME)
     except:
         print("Error?")
@@ -83,6 +83,8 @@ def giftcard_buyer():
         driver.find_element(By.XPATH, "//h1[contains(.,'Authentication Required')]")
         raise AuthenticationError("You need to manually confirm your login")
     except NoSuchElementException:
+        print("Error?")
+        print(sys.exc_info()[0])
         pass
 
     i = 0
@@ -110,6 +112,8 @@ def giftcard_buyer():
                     driver.find_element(By.ID, "signInSubmit").click()
                     time.sleep(12)
                 except NoSuchElementException:
+                    print("Error?")
+                    print(sys.exc_info()[0])
                     pass
 
             print("Click change card link")
@@ -117,6 +121,8 @@ def giftcard_buyer():
                 driver.find_element(By.ID, "payChangeButtonId").click()
                 time.sleep(4)
             except NoSuchElementException:
+                print("Error?")
+                print(sys.exc_info()[0])
                 pass
 
             print("Click CC radio button")
