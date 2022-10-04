@@ -112,12 +112,13 @@ def giftcard_buyer():
                     driver.find_element(By.ID, "signInSubmit").click()
                     time.sleep(12)
                 except NoSuchElementException:
-                    print("Error?")
+                    print("No need to log in again, right?")
                     print(sys.exc_info()[0])
                     pass
 
             print("Click change card link")
             try:
+                wait.until(expected_conditions.presence_of_element_located((By.ID, "payChangeButtonId")))
                 driver.find_element(By.ID, "payChangeButtonId").click()
                 time.sleep(4)
             except NoSuchElementException:
@@ -152,7 +153,7 @@ def giftcard_buyer():
                         print("Error?")
                         print(sys.exc_info()[0])
             except:
-                print("Error?")
+                print("No need for CC validation?")
                 print(sys.exc_info()[0])
                 pass
 
