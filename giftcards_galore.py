@@ -27,13 +27,13 @@ AMAZON_PASSWORD = os.getenv("AMAZON_PASSWORD")
 
 # 0-indexed array of your Amazon payment methods
 # Refer to https://www.amazon.com/gp/wallet
-CARDS = [0, 1, 2, 3]
+CARDS = [0, 1, 2, 3, 4, 5, 6]
 
 # Your credit card numbers, corresponding to the index of each card in the CARDS array
 CARD_NUMBERS = [os.getenv("CC0"), os.getenv("CC1"), os.getenv("CC2"), os.getenv("CC3")]
 
 # Iterations array, corresponds to the number of purchases for each card
-ITERATIONS = [0, 0, 12, 12]
+ITERATIONS = [0, 0, 0, 0, 12, 0, 12]
 
 # Amount to be loaded onto each gift card
 GIFT_CARD_AMOUNT = os.getenv("GIFT_CARD_AMOUNT")
@@ -53,8 +53,8 @@ def giftcard_buyer():
     print(AMAZON_USERNAME)
     driver.get("https://www.amazon.com/asv/reload/")
     try:
-        wait.until(expected_conditions.title_contains("Amazon Reload"))
-        driver.find_element(By.ID, "gcui-asv-reload-form-custom-amount").send_keys(str(GIFT_CARD_AMOUNT))
+        wait.until(expected_conditions.title_contains("Gift Card Balance Reload"))
+        driver.find_element(By.ID, "gc-ui-form-custom-amount").send_keys(str(GIFT_CARD_AMOUNT))
         time.sleep(1)
         inputs = driver.find_elements(By.NAME, "submit.gc-buy-now")
         for x in inputs:
@@ -97,8 +97,9 @@ def giftcard_buyer():
             # Submit new gift card amount after the first time, but also for the first iteration of each subsequent card
             if iteration != 0 or (card > 0 and iteration == 0 and ITERATIONS[card - 1] != 0):
                 print("New iteration gift card amount setup")
-                wait.until(expected_conditions.title_contains("Amazon Reload"))
-                driver.find_element(By.ID, "gcui-asv-reload-form-custom-amount").send_keys(str(GIFT_CARD_AMOUNT))
+                wait.until(expected_conditions.title_contains("Gift Card Balance Reload"))
+                print("Input gift card amount")
+                driver.find_element(By.ID, "gc-ui-form-custom-amount").send_keys(str(GIFT_CARD_AMOUNT))
                 time.sleep(1)
                 inputs = driver.find_elements(By.NAME, "submit.gc-buy-now")
                 for x in inputs:
@@ -116,14 +117,22 @@ def giftcard_buyer():
                     print(sys.exc_info()[0])
                     pass
 
+            time.sleep(2)
             print("Click change card link")
             try:
-                wait.until(expected_conditions.presence_of_element_located((By.ID, "payChangeButtonId")))
-                driver.find_element(By.ID, "payChangeButtonId").click()
-                time.sleep(4)
-            except NoSuchElementException:
+                wait.until(expected_conditions.presence_of_element_located((By.XPATH, "//a[contains(@href,'chg_payselect')]")))
+                driver.find_element(By.XPATH, "//a[contains(@href,'chg_payselect')]").click()
+                time.sleep(6)
+            except:
                 print("Error?")
                 print(sys.exc_info()[0])
+                try:
+                    driver.find_element(By.ID, "payChangeButtonId").click()
+                    time.sleep(4)
+                except:
+                    print("Error?")
+                    print(sys.exc_info()[0])
+                    pass
                 pass
 
             print("Click CC radio button")
@@ -172,7 +181,7 @@ def giftcard_buyer():
 
             print("Click place your order button")
             driver.find_element(By.XPATH, "//input[@aria-labelledby='submitOrderButtonId-announce']").click()
-            time.sleep(4)
+            time.sleep(8)
 
             print("Continue loop")
             driver.get("https://www.amazon.com/asv/reload/")
