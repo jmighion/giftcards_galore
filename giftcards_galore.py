@@ -54,6 +54,10 @@ def giftcard_buyer():
     driver.get("https://www.amazon.com/asv/reload/")
     try:
         wait.until(expected_conditions.title_contains("Gift Card Balance Reload"))
+        print("Select one time reload")
+        # Note the .// for finding child button in the xpath
+        driver.find_element(By.ID, "reload_type_0").find_element(By.XPATH, ".//button").click()
+        time.sleep(1)
         driver.find_element(By.ID, "gc-ui-form-custom-amount").send_keys(str(GIFT_CARD_AMOUNT))
         time.sleep(1)
         inputs = driver.find_elements(By.NAME, "submit.gc-buy-now")
@@ -98,6 +102,10 @@ def giftcard_buyer():
             if iteration != 0 or (card > 0 and iteration == 0 and ITERATIONS[card - 1] != 0):
                 print("New iteration gift card amount setup")
                 wait.until(expected_conditions.title_contains("Gift Card Balance Reload"))
+                print("Select one time reload")
+                # Note the .// for finding child button in the xpath
+                driver.find_element(By.ID, "reload_type_0").find_element(By.XPATH, ".//button").click()
+                time.sleep(1)
                 print("Input gift card amount")
                 driver.find_element(By.ID, "gc-ui-form-custom-amount").send_keys(str(GIFT_CARD_AMOUNT))
                 time.sleep(1)
