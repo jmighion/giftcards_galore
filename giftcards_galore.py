@@ -27,13 +27,13 @@ AMAZON_PASSWORD = os.getenv("AMAZON_PASSWORD")
 
 # 0-indexed array of your Amazon payment methods
 # Refer to https://www.amazon.com/gp/wallet
-CARDS = [0, 1, 2, 3, 4, 5, 6]
+CARDS = [0, 1, 2, 3]
 
 # Your credit card numbers, corresponding to the index of each card in the CARDS array
 CARD_NUMBERS = [os.getenv("CC0"), os.getenv("CC1"), os.getenv("CC2"), os.getenv("CC3")]
 
 # Iterations array, corresponds to the number of purchases for each card
-ITERATIONS = [0, 0, 0, 0, 12, 0, 12]
+ITERATIONS = [0, 0, 12, 12]
 
 # Amount to be loaded onto each gift card
 GIFT_CARD_AMOUNT = os.getenv("GIFT_CARD_AMOUNT")
@@ -56,10 +56,10 @@ def giftcard_buyer():
         wait.until(expected_conditions.title_contains("Gift Card Balance Reload"))
         print("Select one time reload")
         # Note the .// for finding child button in the xpath
-        driver.find_element(By.ID, "reload_type_0").find_element(By.XPATH, ".//button").click()
-        time.sleep(1)
+        driver.find_element(By.ID, "reload_type_0").click()
+        time.sleep(3)
         driver.find_element(By.ID, "gc-ui-form-custom-amount").send_keys(str(GIFT_CARD_AMOUNT))
-        time.sleep(1)
+        time.sleep(3)
         inputs = driver.find_elements(By.NAME, "submit.gc-buy-now")
         for x in inputs:
             if x.is_displayed():
@@ -103,16 +103,29 @@ def giftcard_buyer():
                 print("New iteration gift card amount setup")
                 wait.until(expected_conditions.title_contains("Gift Card Balance Reload"))
                 print("Select one time reload")
-                # Note the .// for finding child button in the xpath
-                driver.find_element(By.ID, "reload_type_0").find_element(By.XPATH, ".//button").click()
-                time.sleep(1)
+                # Note the .// for finding child button in the xpath. .find_element(By.XPATH, ".//button")?
+                # driver.find_element(By.ID, "reload_type_0").click()
+                driver.find_element(By.XPATH, "//input[@aria-labelledby='reload_type_0-announce']").click()
+                time.sleep(3)
                 print("Input gift card amount")
                 driver.find_element(By.ID, "gc-ui-form-custom-amount").send_keys(str(GIFT_CARD_AMOUNT))
-                time.sleep(1)
-                inputs = driver.find_elements(By.NAME, "submit.gc-buy-now")
-                for x in inputs:
-                    if x.is_displayed():
-                        x.click()
+                time.sleep(3)
+                try:
+                    inputs = driver.find_elements(By.NAME, "submit.gc-buy-now")
+                    for x in inputs:
+                        if x.is_displayed():
+                            x.click()
+                except:
+                    print("Error?")
+                    print(sys.exc_info()[0])
+                    try:
+                        inputs = driver.find_elements(By.NAME, "submit.gc-buy-now")
+                        for x in inputs:
+                            if x.is_displayed():
+                                x.click()
+                    except:
+                        print("Error?")
+                        print(sys.exc_info()[0])
 
                 # One time I was prompted for the password and token again. Haven't ran into it again yet, so this can probably be deleted.
                 try:
@@ -130,7 +143,7 @@ def giftcard_buyer():
             try:
                 wait.until(expected_conditions.presence_of_element_located((By.XPATH, "//a[contains(@href,'chg_payselect')]")))
                 driver.find_element(By.XPATH, "//a[contains(@href,'chg_payselect')]").click()
-                time.sleep(6)
+                time.sleep(3)
             except:
                 print("Error?")
                 print(sys.exc_info()[0])
@@ -189,11 +202,11 @@ def giftcard_buyer():
 
             print("Click place your order button")
             driver.find_element(By.XPATH, "//input[@aria-labelledby='submitOrderButtonId-announce']").click()
-            time.sleep(8)
+            time.sleep(3)
 
             print("Continue loop")
             driver.get("https://www.amazon.com/asv/reload/")
-            time.sleep(4)
+            time.sleep(3)
         i += 1
     driver.quit()
 
