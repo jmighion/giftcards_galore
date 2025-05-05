@@ -14,6 +14,8 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 # Load env variables from ".env" file in the same folder
 load_dotenv()
@@ -50,7 +52,7 @@ class AuthenticationError(Exception):
 def giftcard_buyer():
 
     wait = WebDriverWait(driver, 10)
-    print(AMAZON_USERNAME)
+    # print(AMAZON_USERNAME)
     driver.get("https://www.amazon.com/asv/reload/")
     try:
         wait.until(expected_conditions.title_contains("Gift Card Balance Reload"))
@@ -68,9 +70,9 @@ def giftcard_buyer():
         # Added wait times between most page loads because the driver was going too fast
         # The wait.until() did not seem to work. Could probably change the wait.until to check for the next element.
         time.sleep(4)
-        wait.until(expected_conditions.title_contains("Amazon Sign-In"))
+        # wait.until(expected_conditions.title_contains("Amazon Sign-In"))
         # time.sleep(4)
-        driver.find_element(By.ID, "ap_email").send_keys(AMAZON_USERNAME)
+        driver.find_element(By.NAME, "email").send_keys(AMAZON_USERNAME)
     except:
         print("Error?")
         print(sys.exc_info()[0])
@@ -78,6 +80,7 @@ def giftcard_buyer():
 
     driver.find_element(By.ID, "continue").click()
     time.sleep(3)
+    ActionChains(driver).send_keys(Keys.ESCAPE).perform()
     driver.find_element(By.ID, "ap_password").send_keys(AMAZON_PASSWORD)
     driver.find_element(By.ID, "signInSubmit").click()
     time.sleep(12)
@@ -157,6 +160,7 @@ def giftcard_buyer():
                 pass
 
             print("Click CC radio button")
+            wait.until(expected_conditions.presence_of_element_located((By.XPATH, "//input[@type='radio']")))
             driver.find_elements(By.XPATH, "//input[@type='radio']")[card].click()
             time.sleep(4)
 
@@ -198,6 +202,13 @@ def giftcard_buyer():
             except:
                 print("Error?")
                 print(sys.exc_info()[0])
+                use_this_card = driver.find_element(By.XPATH, "//input[@aria-labelledby='checkout-secondary-continue-button-id-announce']")
+                if use_this_card:
+                    print("Click use this card button")
+
+                    use_this_card.click()
+                    del use_this_card
+                    time.sleep(4)
                 pass
 
             print("Click place your order button")
