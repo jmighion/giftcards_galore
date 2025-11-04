@@ -29,13 +29,13 @@ AMAZON_PASSWORD = os.getenv("AMAZON_PASSWORD")
 
 # 0-indexed array of your Amazon payment methods
 # Refer to https://www.amazon.com/gp/wallet
-CARDS = [0, 1, 2, 3]
+CARDS = [0, 1]
 
 # Your credit card numbers, corresponding to the index of each card in the CARDS array
-CARD_NUMBERS = [os.getenv("CC0"), os.getenv("CC1"), os.getenv("CC2"), os.getenv("CC3")]
+CARD_NUMBERS = [os.getenv("CC0"), os.getenv("CC1")]
 
 # Iterations array, corresponds to the number of purchases for each card
-ITERATIONS = [0, 0, 12, 12]
+ITERATIONS = [12, 0]
 
 # Amount to be loaded onto each gift card
 GIFT_CARD_AMOUNT = os.getenv("GIFT_CARD_AMOUNT")
